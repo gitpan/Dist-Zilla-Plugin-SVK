@@ -62,7 +62,7 @@ Dist::Zilla::Role::SVK::DirtyFiles - provide the allow_dirty & changelog attribu
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 DESCRIPTION
 
@@ -73,7 +73,7 @@ dirty in the local svk checkout.
 
 =head2 allow_dirty
 
-A list of files that are allowed to be dirty in the git checkout.
+A list of files that are allowed to be dirty in the svk checkout.
 Defaults to C<dist.ini> and the changelog (as defined per the
 C<changelog> attribute.
 

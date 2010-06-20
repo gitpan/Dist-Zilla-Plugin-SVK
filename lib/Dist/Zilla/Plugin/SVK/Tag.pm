@@ -93,6 +93,7 @@ sub after_release {
 	$svk->copy( "$depotpath", "$tagpath/$tag",
 		'-m', $message );
 		$self->log("Tagged $tag");
+	$xd->store;
 }
 
 1;
@@ -106,7 +107,7 @@ Dist::Zilla::Plugin::SVK::Tag - tag the new version
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 

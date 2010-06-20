@@ -73,7 +73,7 @@ Dist::Zilla::Plugin::SVK::Push - push current branch
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 
@@ -85,7 +85,7 @@ In your F<dist.ini>:
 
 =head1 DESCRIPTION
 
-Once the release is done, this plugin will push current git branch to
+Once the release is done, this plugin will push current svk branch to
 remote end, with the associated tags.
 
 The plugin accepts the following options:
