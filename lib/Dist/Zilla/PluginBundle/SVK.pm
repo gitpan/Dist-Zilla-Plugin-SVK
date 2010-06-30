@@ -55,7 +55,7 @@ Dist::Zilla::PluginBundle::SVK - all SVK plugins in one go
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 SYNOPSIS
 

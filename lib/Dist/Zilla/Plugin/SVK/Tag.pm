@@ -39,44 +39,27 @@ has tag_directory => ( ro, isa=>Str, default => 'tags' );
 
 sub before_release {
     my $self = shift;
-	my $svkpath = find_dotsvk || $ENV{SVKROOT} || $ENV{HOME} . "/.svk";
-	my $output;
-	my $xd = SVK::XD->new( giantlock => "$svkpath/lock",
-		statefile => "$svkpath/config",
-		svkpath => $svkpath,
-		);
-	my $svk = SVK->new( xd => $xd, output => \$output );
-	$xd->load();
-	my ( undef, $branch, undef, $cinfo, undef ) = 
-		$xd->find_repos_from_co( '.', undef );
-	my $depotpath = $cinfo->{depotpath};
 	my $firstpart = qr|^/([^/]*)|;
+	my $info = qx "svk info";
+	$info =~ m/^.*\n[^\/]*(\/.*)$/m; my $depotpath = $1;
 	( my $depotname = $depotpath ) =~ s|$firstpart.*$|$1|;
-	( my $project = $branch ) =~ s|$firstpart.*$|$1|;
+	my $project = $self->zilla->name;
+	my $project_dir = lc $project;
+	$project_dir =~ s/::/-/g;
 	my $tag_dir = $self->tag_directory;
 
     # Make sure a tag with the new version doesn't exist yet:
     my $tag = _format_tag($self->tag_format, $self->zilla);
-	$svk->ls("/$depotname/$project/$tag_dir");
+	my $output = qx "svk ls /$depotname/$project_dir/$tag_dir";
 	my @tags = split "\n", $output;
     $self->log_fatal("tag $tag already exists") if any { m/^$tag/ } @tags;
-	$xd->store;
 }
 
 sub after_release {
     my $self = shift;
-	my $svkpath = find_dotsvk || $ENV{SVKROOT} || $ENV{HOME} . "/.svk";
-	my $output;
-	my $xd = SVK::XD->new( giantlock => "$svkpath/lock",
-		statefile => "$svkpath/config",
-		svkpath => $svkpath,
-		);
-	my $svk = SVK->new( xd => $xd, output => \$output );
-	$xd->load();
-	my ( undef, $branch, undef, $cinfo, undef ) = 
-		$xd->find_repos_from_co( '.', undef );
-	my $depotpath = $cinfo->{depotpath};
 	my $firstpart = qr|^/([^/]*)|;
+	my $info = qx "svk info";
+	$info =~ m/^.*\n[^\/]*(\/.*)$/m; my $depotpath = $1;
 	( my $depotname = $depotpath ) =~ s|$firstpart.*$|$1|;
 	my $project = $self->zilla->name;
 	my $project_dir = lc $project;
@@ -90,10 +73,8 @@ sub after_release {
 	$tagpath = dirname( $tagpath ) until basename( $tagpath ) eq
 		$project_dir or basename( $tagpath ) eq $depotname;;
 	$tagpath .= "/$tag_dir";
-	$svk->copy( "$depotpath", "$tagpath/$tag",
-		'-m', $message );
-		$self->log("Tagged $tag");
-	$xd->store;
+	system( "svk copy $depotpath $tagpath/$tag -m $message" );
+	$self->log("Tagged $tag");
 }
 
 1;
@@ -107,7 +88,7 @@ Dist::Zilla::Plugin::SVK::Tag - tag the new version
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 SYNOPSIS
 
@@ -156,6 +137,16 @@ the distribution name
 =item C<%v>
 
 the distribution version
+
+=back
+
+ -- role implementation
+
+=over 4
+
+=item before_release
+
+Depotpath from second line of 'svk info'. Depotname from after first slash. Project from dist.ini, is directory under depotname.
 
 =back
 
