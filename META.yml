@@ -43,4 +43,4 @@ requires:
 resources:
   homepage: http://search.cpan.org/dist/Dist-Zilla-Plugin-SVK/
   repository: http://svn.openfoundry.org/dzilsvk
-version: 0.03
+version: 0.04

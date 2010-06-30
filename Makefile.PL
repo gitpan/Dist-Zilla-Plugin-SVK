@@ -48,7 +48,7 @@ my %WriteMakefileArgs = (
     'SVK::XD' => '0',
     'String::Formatter' => '0'
   },
-  'VERSION' => '0.03',
+  'VERSION' => '0.04',
   'test' => {
     'TESTS' => 't/*.t'
   }
