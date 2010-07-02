@@ -13,6 +13,16 @@ use File::Basename;
 use Moose;
 use MooseX::Has::Sugar;
 use MooseX::Types::Moose qw{ ArrayRef Str };
+use String::Formatter method_stringf => {
+  -as => '_format_tag',
+  codes => {
+    d => sub { require DateTime;
+               DateTime->now->format_cldr($_[1] || 'dd-MMM-yyyy') },
+    n => sub { "\n" },
+    N => sub { $_[0]->name },
+    v => sub { $_[0]->version },
+  },
+};
 
 with 'Dist::Zilla::Role::AfterRelease';
 
@@ -20,35 +30,41 @@ with 'Dist::Zilla::Role::AfterRelease';
 
 # -- attributes
 
-#has push_to => (
-#  is   => 'ro',
-#  isa  => 'ArrayRef[Str]',
-#  lazy => 1,
-#  default => sub { [ qw(origin) ] },
-#);
-
+has push_to => (
+  is   => 'rw',
+  isa  => 'Str',
+  lazy => 1,
+  default => "//mirror",
+);
 
 sub after_release {
     my $self = shift;
-	my $namepart = qr|[^/]*|;
-	my $info = qx "svk info";
-	$info =~ m/^.*\n[^\/]*(\/.*)$/m; my $depotpath = $1;
-	( my $depotname = $depotpath ) =~ s|^/($namepart).*$|$1|;
-	my $project = $self->zilla->name;
-	my $project_dir = lc $project;
-	$project_dir =~ s/::/-/g;
-	my $tag_dir = $self->zilla->plugin_named('SVK::Tag')->tag_directory;
-
 	# push everything on remote branch
 	$self->log("pushing to remote");
 	system( 'svk push' );
 	$self->log_debug( "The local changes" );
-	my $switchpath = $depotpath;
-	$switchpath = dirname( $switchpath ) until basename( $switchpath ) eq
-		$project_dir or basename( $switchpath ) eq $depotname;
-	$switchpath .= "/$tag_dir";
-	system( "svk switch $switchpath" );
-	system( 'svk push' );
+	my $tagger = $self->zilla->plugin_named('SVK::Tag');
+	my $project = $tagger->project || $self->zilla->name;
+	my $project_dir = lc $project;
+	$project_dir =~ s/::/-/g;
+	my $tag_dir = $tagger->tag_directory;
+	my $firstpart = qr|^/([^/]*)|;
+	my $info = qx "svk info";
+	$info =~ m/^.*\n[^\/]*(\/.*)$/m; my $depotpath = $1;
+	( my $depotname = $depotpath ) =~ s|$firstpart.*$|$1|;
+	$depotpath = dirname( $depotpath ) until basename( $depotpath ) eq
+		$project_dir or basename( $depotpath ) eq $depotname
+			or basename( $depotpath ) eq '/';
+	my $remote = $self->push_to;
+	my $tag_format = $tagger->tag_format;
+	my $tag_message = $tagger->tag_message;
+	my $tag = _format_tag($tag_format, $self->zilla);
+	my $message = _format_tag($tag_message, $self->zilla);
+	my $localtagpath = "$depotpath/$tag_dir/$tag";
+	my $remotetagpath = "$remote/$project_dir/$tag_dir/$tag";
+	system( "svk mkdir $remotetagpath -m $message" );
+	system( "svk smerge --baseless $localtagpath $remotetagpath -m $message" );
+	# system( "svk cp $localtagpath $remotetagpath -m $message" );
 	$self->log_debug( "The tags too" );
 }
 
@@ -63,20 +79,19 @@ Dist::Zilla::Plugin::SVK::Push - push current branch
 
 =head1 VERSION
 
-version 0.04
+version 0.10
 
 =head1 SYNOPSIS
 
 In your F<dist.ini>:
 
-    [Git::Push]
-    push_to = //mirror/project      ; this is the default
-    push_to = origin HEAD:refs/heads/released ; also push to released branch
+    [SVK::Push]
+    push_to = //mirror      ; this is the default, the project is underneath
 
 =head1 DESCRIPTION
 
 Once the release is done, this plugin will push current svk branch to
-remote end, with the associated tags.
+remote that it was copied from, but the associated tags need the mirror name.
 
 The plugin accepts the following options:
 
@@ -84,8 +99,7 @@ The plugin accepts the following options:
 
 =item * 
 
-push_to - the name of the a remote to push to. The default is F<origin>.
-This may be specified multiple times to push to multiple repositories.
+push_to - the name of the remote repo to push to. The default is F<//mirror>. The project and tags subdirectories underneath the remote are from F<Tag.pm>, 
 
 =back
 

@@ -54,7 +54,7 @@ sub after_release {
     system( "svk add @output" );
     $self->log_debug($_) for qx "svk commit -F $filename";
     $self->log("Committed @output");
-	# unlink $filename;
+	unlink $filename;
 }
 
 
@@ -96,7 +96,7 @@ Dist::Zilla::Plugin::SVK::Commit - commit dirty files
 
 =head1 VERSION
 
-version 0.04
+version 0.10
 
 =head1 SYNOPSIS
 

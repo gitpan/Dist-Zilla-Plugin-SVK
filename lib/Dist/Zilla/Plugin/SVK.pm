@@ -17,7 +17,7 @@ Dist::Zilla::Plugin::SVK - have svk update your repository at release time
 
 =head1 VERSION
 
-version 0.04
+version 0.10
 
 =head1 DESCRIPTION
 

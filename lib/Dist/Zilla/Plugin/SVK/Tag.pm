@@ -62,7 +62,7 @@ sub after_release {
 	my $info = qx "svk info";
 	$info =~ m/^.*\n[^\/]*(\/.*)$/m; my $depotpath = $1;
 	( my $depotname = $depotpath ) =~ s|$firstpart.*$|$1|;
-	my $project = $self->zilla->name;
+	my $project = $self->project || $self->zilla->name;
 	my $project_dir = lc $project;
 	$project_dir =~ s/::/-/g;
 	my $tag_dir = $self->tag_directory;
@@ -89,7 +89,7 @@ Dist::Zilla::Plugin::SVK::Tag - tag the new version
 
 =head1 VERSION
 
-version 0.04
+version 0.10
 
 =head1 SYNOPSIS
 

@@ -56,7 +56,7 @@ Dist::Zilla::Plugin::SVK::Check - check your svk repository before releasing
 
 =head1 VERSION
 
-version 0.04
+version 0.10
 
 =head1 SYNOPSIS
 
